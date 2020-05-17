@@ -1,0 +1,46 @@
+name: Develop releases
+
+on:
+  push:
+    branches:
+      - develop
+jobs:
+  build:
+    name: Build application
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout develop branch
+        uses: actions/checkout@v2
+      - name: Setup .NET Core 3.1
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.101
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore CoffeeShopTalk.WebApi/CoffeeShopTalk.WebApi.csproj
+      - name: Publish
+        run: dotnet publish --configuration Release --no-restore CoffeeShopTalk.WebApi/CoffeeShopTalk.WebApi.csproj
+      - name: Build docker image
+        run: docker build --tag weisong0908/coffee-shop-talk-webapi-stg .
+      - name: Login to Docker Hub with access token
+        run: docker login -u weisong0908 -p ${{ secrets.DOCKERHUB_ACCESSTOKEN }}
+      - name: Push docker image to Docker Hub
+        run: docker push weisong0908/coffee-shop-talk-webapi-stg
+  deploy:
+    name: Deploy to server
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executes remote ssh commands using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DIGITALOCEAN_SERVERADDRESS }}
+          username: weisong0908
+          key: ${{ secrets.DIGITALOCEAN_SSHKEY }}
+          port: 22
+          script: |
+            docker stop coffee-shop-talk-webapi-stg
+            docker rm coffee-shop-talk-webapi-stg
+            docker pull weisong0908/coffee-shop-talk-webapi-stg
+            docker run -d -p 5000:80 --name coffee-shop-talk-webapi-stg weisong0908/coffee-shop-talk-webapi-stg -e Cors:ClientOrigin=https://coffee-shop-talk-vue-stg.tengweisong.com
