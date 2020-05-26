@@ -1,13 +1,17 @@
+using System;
 using System.Threading.Tasks;
+using CoffeeShopTalk.WebApi.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace CoffeeShopTalk.WebApi.Hubs
 {
     public class ChatHub : Hub
     {
-        public async Task SendMessage(string user, string message)
+        public async Task SendMessage(Message message)
         {
-            await Clients.All.SendAsync("ReceiveMessage", user, message);
+            message.Time = DateTime.Now;
+
+            await Clients.All.SendAsync("ReceiveMessage", message);
         }
     }
 }
