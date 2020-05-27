@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using CoffeeShopTalk.WebApi.Hubs;
+using CoffeeShopTalk.WebApi.UserIdProvider;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CoffeeShopTalk.WebApi
 {
@@ -51,6 +56,34 @@ namespace CoffeeShopTalk.WebApi
                 options.KnownNetworks.Clear();
                 options.KnownProxies.Clear();
             });
+            services.AddAuthentication(configureOptions =>
+            {
+                configureOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                configureOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(configureOptions =>
+            {
+                configureOptions.Audience = Configuration.GetValue<string>("Auth0:ApiIdentifier");
+                configureOptions.Authority = $"https://{Configuration.GetValue<string>("Auth0:Domain")}";
+                configureOptions.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    NameClaimType = ClaimTypes.NameIdentifier
+                };
+                configureOptions.Events = new JwtBearerEvents()
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+
+                        if (!string.IsNullOrWhiteSpace(accessToken) && (path.StartsWithSegments("/chathub")))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -69,6 +102,7 @@ namespace CoffeeShopTalk.WebApi
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
