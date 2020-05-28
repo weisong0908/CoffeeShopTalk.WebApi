@@ -4,8 +4,10 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using CoffeeShopTalk.WebApi.Hubs;
+using CoffeeShopTalk.WebApi.Requirements;
 using CoffeeShopTalk.WebApi.UserIdProvider;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -45,6 +47,7 @@ namespace CoffeeShopTalk.WebApi
                         .AllowCredentials();
                 });
             });
+
             services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders =
@@ -56,34 +59,44 @@ namespace CoffeeShopTalk.WebApi
                 options.KnownNetworks.Clear();
                 options.KnownProxies.Clear();
             });
-            services.AddAuthentication(configureOptions =>
-            {
-                configureOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                configureOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(configureOptions =>
-            {
-                configureOptions.Audience = Configuration.GetValue<string>("Auth0:ApiIdentifier");
-                configureOptions.Authority = $"https://{Configuration.GetValue<string>("Auth0:Domain")}";
-                configureOptions.TokenValidationParameters = new TokenValidationParameters()
+
+            services
+                .AddAuthentication(configureOptions =>
                 {
-                    NameClaimType = ClaimTypes.NameIdentifier
-                };
-                configureOptions.Events = new JwtBearerEvents()
+                    configureOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    configureOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(configureOptions =>
                 {
-                    OnMessageReceived = context =>
+                    configureOptions.Authority = $"https://{Configuration.GetValue<string>("Auth0:Domain")}";
+                    configureOptions.Audience = Configuration.GetValue<string>("Auth0:ApiIdentifier");
+                    configureOptions.TokenValidationParameters = new TokenValidationParameters()
                     {
-                        var accessToken = context.Request.Query["access_token"];
-                        var path = context.HttpContext.Request.Path;
-
-                        if (!string.IsNullOrWhiteSpace(accessToken) && (path.StartsWithSegments("/chathub")))
+                        NameClaimType = ClaimTypes.NameIdentifier
+                    };
+                    configureOptions.Events = new JwtBearerEvents()
+                    {
+                        OnMessageReceived = context =>
                         {
-                            context.Token = accessToken;
-                        }
+                            var accessToken = context.Request.Query["access_token"];
+                            var path = context.HttpContext.Request.Path;
 
-                        return Task.CompletedTask;
-                    }
-                };
+                            if (!string.IsNullOrWhiteSpace(accessToken) && (path.StartsWithSegments("/chathub")))
+                            {
+                                context.Token = accessToken;
+                            }
+
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+
+            services.AddAuthorization(configure =>
+            {
+                configure.AddPolicy("read:weather", policy => policy.Requirements.Add(new HasPermissionRequirement("read:weather", $"https://{Configuration.GetValue<string>("Auth0:Domain")}")));
             });
+
+            services.AddSingleton<IAuthorizationHandler, HasPermissionHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
