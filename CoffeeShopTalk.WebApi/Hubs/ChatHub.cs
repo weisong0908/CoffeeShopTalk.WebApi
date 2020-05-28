@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CoffeeShopTalk.WebApi.Models;
 using Microsoft.AspNetCore.SignalR;
@@ -11,7 +13,12 @@ namespace CoffeeShopTalk.WebApi.Hubs
         {
             message.Time = DateTime.Now;
 
-            await Clients.All.SendAsync("ReceiveMessage", message);
+            var recipients = new List<string>() { Context.UserIdentifier };
+
+            if (recipients.Contains(message.RecipientId))
+                recipients.Add(message.RecipientId);
+
+            await Clients.Users(recipients).SendAsync("ReceiveMessage", message);
         }
     }
 }

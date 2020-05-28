@@ -7,7 +7,8 @@ namespace CoffeeShopTalk.WebApi.UserIdProvider
     {
         public string GetUserId(HubConnectionContext connection)
         {
-            return connection.User?.FindFirstValue("sub");
+            var scope = connection.User.FindFirst(claim => claim.Type == "sub");
+            return scope.Value;
         }
     }
 }
