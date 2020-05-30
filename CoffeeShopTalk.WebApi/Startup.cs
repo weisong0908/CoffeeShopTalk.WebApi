@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using CoffeeShopTalk.WebApi.Hubs;
+using CoffeeShopTalk.WebApi.Persistence;
 using CoffeeShopTalk.WebApi.Requirements;
 using CoffeeShopTalk.WebApi.UserIdProvider;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,6 +15,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -97,6 +99,10 @@ namespace CoffeeShopTalk.WebApi
             });
 
             services.AddSingleton<IAuthorizationHandler, HasPermissionHandler>();
+
+            services.AddDbContext<CoffeeShopTalkDbContext>(optionsAction =>
+                optionsAction.UseInMemoryDatabase("CoffeeShopTalk")
+            );
 
             // services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
         }
