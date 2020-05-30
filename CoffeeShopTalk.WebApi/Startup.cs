@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using CoffeeShopTalk.WebApi.Hubs;
 using CoffeeShopTalk.WebApi.Persistence;
 using CoffeeShopTalk.WebApi.Requirements;
-using CoffeeShopTalk.WebApi.UserIdProvider;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -96,6 +95,8 @@ namespace CoffeeShopTalk.WebApi
             services.AddAuthorization(configure =>
             {
                 configure.AddPolicy("read:weather", policy => policy.Requirements.Add(new HasPermissionRequirement("read:weather", $"https://{Configuration.GetValue<string>("Auth0:Domain")}")));
+                configure.AddPolicy("read:chat_manager", policy => policy.Requirements.Add(new HasPermissionRequirement("read:chat_manager", $"https://{Configuration.GetValue<string>("Auth0:Domain")}")));
+                configure.AddPolicy("write:chat_manager", policy => policy.Requirements.Add(new HasPermissionRequirement("write:chat_manager", $"https://{Configuration.GetValue<string>("Auth0:Domain")}")));
             });
 
             services.AddSingleton<IAuthorizationHandler, HasPermissionHandler>();
@@ -103,8 +104,6 @@ namespace CoffeeShopTalk.WebApi
             services.AddDbContext<CoffeeShopTalkDbContext>(optionsAction =>
                 optionsAction.UseInMemoryDatabase("CoffeeShopTalk")
             );
-
-            // services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
