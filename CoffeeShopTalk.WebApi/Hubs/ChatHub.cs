@@ -21,6 +21,7 @@ namespace CoffeeShopTalk.WebApi.Hubs
         public async Task SendMessage(Message message)
         {
             message.Time = DateTime.Now;
+            message.Sender = Context.User.Claims.FirstOrDefault(c => c.Type == "https://coffee-shop-talk-stg/user.name").Value;
 
             var recipients = new List<string>() { Context.UserIdentifier };
 
@@ -41,7 +42,7 @@ namespace CoffeeShopTalk.WebApi.Hubs
                 user = new User()
                 {
                     UserId = Context.UserIdentifier,
-                    Username = Context.UserIdentifier,
+                    Username = Context.User.Claims.FirstOrDefault(c => c.Type == "https://coffee-shop-talk-stg/user.name").Value,
                     Connection = new Connection()
                     {
                         ConnectionId = Context.ConnectionId,
