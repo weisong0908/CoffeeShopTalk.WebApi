@@ -43,7 +43,7 @@ namespace CoffeeShopTalk.WebApi
                 setupAction.AddPolicy("allow client", configurePolicy =>
                 {
                     configurePolicy
-                        .WithOrigins(Configuration.GetValue<string>("Cors:ClientOrigin"))
+                        .WithOrigins(Configuration.GetSection("Cors:ClientOrigin").Get<string[]>())
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
