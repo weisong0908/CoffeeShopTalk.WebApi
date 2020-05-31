@@ -1,4 +1,4 @@
-name: Develop releases
+name: Staging release
 
 on:
     push:
