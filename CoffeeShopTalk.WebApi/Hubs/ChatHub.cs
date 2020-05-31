@@ -63,9 +63,11 @@ namespace CoffeeShopTalk.WebApi.Hubs
                 _dbContext.Users.Update(user);
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
-            await Clients.All.SendAsync("OnConnected", user);
+            var users = await _dbContext.Users.Include(user => user.Connection).ToListAsync();
+
+            await Clients.All.SendAsync("OnConnected", users);
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
@@ -74,9 +76,12 @@ namespace CoffeeShopTalk.WebApi.Hubs
 
             user.Connection.IsConnected = false;
             _dbContext.Users.Update(user);
-            _dbContext.SaveChanges();
 
-            await Clients.All.SendAsync("OnDisconnected", user, exception);
+            await _dbContext.SaveChangesAsync();
+
+            var users = await _dbContext.Users.Include(user => user.Connection).ToListAsync();
+
+            await Clients.All.SendAsync("OnDisconnected", users, exception);
         }
     }
 }
