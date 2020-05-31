@@ -104,6 +104,11 @@ namespace CoffeeShopTalk.WebApi
             services.AddDbContext<CoffeeShopTalkDbContext>(optionsAction =>
                 optionsAction.UseInMemoryDatabase("CoffeeShopTalk")
             );
+
+            services.AddHttpClient("Auth0 Management API", configureClient =>
+            {
+                configureClient.BaseAddress = new Uri(Configuration.GetValue<string>("Auth0:ManagementApiUrl"));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
