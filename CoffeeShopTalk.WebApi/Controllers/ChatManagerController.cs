@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using CoffeeShopTalk.WebApi.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CoffeeShopTalk.WebApi.Controllers
 {
@@ -11,17 +10,17 @@ namespace CoffeeShopTalk.WebApi.Controllers
     [Authorize("read:chat_manager")]
     public class ChatManagerController : ControllerBase
     {
-        private readonly CoffeeShopTalkDbContext _dbContext;
+        private readonly IConnectedUserRepository _connectedUserRepository;
 
-        public ChatManagerController(CoffeeShopTalkDbContext dbContext)
+        public ChatManagerController(IConnectedUserRepository connectedUserRepository)
         {
-            _dbContext = dbContext;
+            _connectedUserRepository = connectedUserRepository;
         }
 
         [HttpGet("connectedUsers")]
         public async Task<IActionResult> GetConnectedUsers()
         {
-            var users = await _dbContext.Users.Include(user => user.Connection).ToListAsync();
+            var users = await _connectedUserRepository.GetConnectedUsers();
 
             return Ok(users);
         }
