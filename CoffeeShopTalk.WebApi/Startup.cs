@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CoffeeShopTalk.WebApi.Hubs;
 using CoffeeShopTalk.WebApi.Persistence;
 using CoffeeShopTalk.WebApi.Requirements;
+using CoffeeShopTalk.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -109,6 +110,8 @@ namespace CoffeeShopTalk.WebApi
             {
                 configureClient.BaseAddress = new Uri(Configuration.GetValue<string>("Auth0:ManagementApiUrl"));
             });
+
+            services.AddScoped<IUserProfileService, UserProfileService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using CoffeeShopTalk.WebApi.Models;
 using CoffeeShopTalk.WebApi.Models.Requests;
+using CoffeeShopTalk.WebApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
@@ -13,15 +15,14 @@ namespace CoffeeShopTalk.WebApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize]
     public class UserProfileController : ControllerBase
     {
-        private readonly IHttpClientFactory _clientFactory;
-        private readonly IConfiguration _configuration;
+        private readonly IUserProfileService _userProfileService;
 
-        public UserProfileController(IHttpClientFactory clientFactory, IConfiguration configuration)
+        public UserProfileController(IUserProfileService userProfileService)
         {
-            _configuration = configuration;
-            _clientFactory = clientFactory;
+            _userProfileService = userProfileService;
         }
 
         [HttpPatch("update")]
@@ -31,38 +32,9 @@ namespace CoffeeShopTalk.WebApi.Controllers
             if (userIdFromAccessToken != request.UserId)
                 return BadRequest("Invalid user");
 
-            var accessToken = await GetAccessToken();
+            var result = await _userProfileService.Update(request);
 
-            var client = _clientFactory.CreateClient("Auth0 Management API");
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-            var userProfileUpdateRequest = new Auth0UserProfileUpdateRequest()
-            {
-                Name = request.Username
-            };
-            var content = new StringContent(JsonSerializer.Serialize(userProfileUpdateRequest), Encoding.UTF8, "application/json");
-            var response = await client.PatchAsync("users/" + request.UserId, content);
-
-            response.EnsureSuccessStatusCode();
-
-            return Ok(await response.Content.ReadAsStringAsync());
-        }
-
-        private async Task<string> GetAccessToken()
-        {
-            var client = _clientFactory.CreateClient();
-
-            var nvc = new Dictionary<string, string>();
-            nvc.Add("grant_type", "client_credentials");
-            nvc.Add("client_id", _configuration.GetValue<string>("Auth0:ClientId"));
-            nvc.Add("client_secret", _configuration.GetValue<string>("Auth0:ClientSecret"));
-            nvc.Add("audience", _configuration.GetValue<string>("Auth0:Audience"));
-
-            var request = new FormUrlEncodedContent(nvc);
-            var response = await client.PostAsync("https://coffee-shop-talk-dev.auth0.com/oauth/token", request);
-
-            var data = await response.Content.ReadAsStringAsync();
-            var data2 = JsonSerializer.Deserialize<Auth0ManagementApiAccessToken>(data);
-            return data2.AccessToken;
+            return Ok(result);
         }
     }
 }
