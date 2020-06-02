@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.SignalR;
+
 namespace CoffeeShopTalk.WebApi.Models
 {
     public class Connection

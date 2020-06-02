@@ -114,6 +114,8 @@ namespace CoffeeShopTalk.WebApi
             services.AddScoped<IUserProfileService, UserProfileService>();
 
             services.AddScoped<IConnectedUserRepository, ConnectedUserRepository>();
+
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

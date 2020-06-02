@@ -5,81 +5,60 @@ using System.Threading.Tasks;
 using CoffeeShopTalk.WebApi.Models;
 using CoffeeShopTalk.WebApi.Persistence;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 
 namespace CoffeeShopTalk.WebApi.Hubs
 {
     public class ChatHub : Hub
     {
-        private readonly CoffeeShopTalkDbContext _dbContext;
+        private readonly IConnectedUserRepository _connectedUserRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ChatHub(CoffeeShopTalkDbContext dbContext)
+        public ChatHub(IConnectedUserRepository connectedUserRepository, IUnitOfWork unitOfWork)
         {
-            _dbContext = dbContext;
+            _connectedUserRepository = connectedUserRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task SendMessage(Message message)
         {
             message.Time = DateTime.Now;
-            message.Sender = Context.User.Claims.FirstOrDefault(c => c.Type == "https://coffee-shop-talk-stg/user.name").Value;
+            message.Sender = Context.User.Claims.FirstOrDefault(c => c.Type == "https://coffee-shop-talk/user.name").Value;
 
             var recipients = new List<string>() { Context.UserIdentifier };
 
             if (recipients.Contains(message.RecipientId))
                 recipients.Add(message.RecipientId);
 
-            var connectionInfo = _dbContext.Users.Include(u => u.Connection).SingleOrDefault(u => u.UserId == Context.UserIdentifier);
+            var connectionInfo = await _connectedUserRepository.GetUser(Context.UserIdentifier);
 
             await Clients.Users(recipients).SendAsync("ReceiveMessage", message, connectionInfo);
         }
 
         public override async Task OnConnectedAsync()
         {
-            var user = _dbContext.Users.Include(user => user.Connection).SingleOrDefault(user => user.UserId == Context.UserIdentifier);
+            var user = await _connectedUserRepository.GetUser(Context.UserIdentifier);
 
             if (user == null)
-            {
-                user = new User()
-                {
-                    UserId = Context.UserIdentifier,
-                    Username = Context.User.Claims.FirstOrDefault(c => c.Type == "https://coffee-shop-talk-stg/user.name").Value,
-                    Connection = new Connection()
-                    {
-                        ConnectionId = Context.ConnectionId,
-                        UserAgent = Context.GetHttpContext().Request.Headers["User-Agent"],
-                        IsConnected = true
-                    }
-                };
-                _dbContext.Users.Add(user);
-            }
+                await _connectedUserRepository.ConnectUser(Context);
             else
-            {
-                user.Connection = new Connection()
-                {
-                    ConnectionId = Context.ConnectionId,
-                    UserAgent = Context.GetHttpContext().Request.Headers["User-Agent"],
-                    IsConnected = true
-                };
-                _dbContext.Users.Update(user);
-            }
+                _connectedUserRepository.UpdateUser(user, Context);
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.CompleteAsync();
 
-            var users = await _dbContext.Users.Include(user => user.Connection).ToListAsync();
+            var users = await _connectedUserRepository.GetUsers();
 
             await Clients.All.SendAsync("OnConnected", users);
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            var user = _dbContext.Users.Include(user => user.Connection).SingleOrDefault(user => user.UserId == Context.UserIdentifier);
+            var user = await _connectedUserRepository.GetUser(Context.UserIdentifier);
 
-            user.Connection.IsConnected = false;
-            _dbContext.Users.Update(user);
+            _connectedUserRepository.DisconnectUser(user);
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.CompleteAsync();
 
-            var users = await _dbContext.Users.Include(user => user.Connection).ToListAsync();
+            var users = await _connectedUserRepository.GetUsers();
 
             await Clients.All.SendAsync("OnDisconnected", users, exception);
         }

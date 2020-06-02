@@ -20,7 +20,7 @@ namespace CoffeeShopTalk.WebApi.Controllers
         [HttpGet("connectedUsers")]
         public async Task<IActionResult> GetConnectedUsers()
         {
-            var users = await _connectedUserRepository.GetConnectedUsers();
+            var users = await _connectedUserRepository.GetUsers();
 
             return Ok(users);
         }
