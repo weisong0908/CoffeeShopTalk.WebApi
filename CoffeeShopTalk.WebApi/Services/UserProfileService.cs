@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -24,17 +25,14 @@ namespace CoffeeShopTalk.WebApi.Services
             _client = _clientFactory.CreateClient("Auth0 Management API");
         }
 
-        public async Task<string> Update(ClientUserProfileUpdateRequest clientRequest)
+        public async Task<string> Update(Auth0UserProfileUpdateRequest serverRequest)
         {
             var accessToken = await GetAccessToken();
 
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            var serverRequest = new Auth0UserProfileUpdateRequest()
-            {
-                Name = clientRequest.Username
-            };
+
             var content = new StringContent(JsonSerializer.Serialize(serverRequest), Encoding.UTF8, "application/json");
-            var response = await _client.PatchAsync("api/v2/users/" + clientRequest.UserId, content);
+            var response = await _client.PatchAsync("api/v2/users/" + serverRequest.UserId, content);
 
             response.EnsureSuccessStatusCode();
 

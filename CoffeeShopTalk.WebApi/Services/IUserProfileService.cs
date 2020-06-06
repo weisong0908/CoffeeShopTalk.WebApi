@@ -5,6 +5,6 @@ namespace CoffeeShopTalk.WebApi.Services
 {
     public interface IUserProfileService
     {
-        Task<string> Update(ClientUserProfileUpdateRequest request);
+        Task<string> Update(Auth0UserProfileUpdateRequest request);
     }
 }
