@@ -20,7 +20,7 @@ namespace CoffeeShopTalk.WebApi
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    webBuilder.UseSentry().UseStartup<Startup>();
                 });
     }
 }

@@ -43,4 +43,4 @@ jobs:
                       docker stop coffee-shop-talk-webapi-stg
                       docker rm coffee-shop-talk-webapi-stg
                       docker pull weisong0908/coffee-shop-talk-webapi-stg
-                      docker run -d -p 5100:80 -v ~/pp:/app/wwwroot --name coffee-shop-talk-webapi-stg weisong0908/coffee-shop-talk-webapi-stg -e Auth0:ClientSecret=${{ secrets.AUTH0_CLIENTSECRET }}
+                      docker run -d -p 5100:80 -v ~/pp:/app/wwwroot --name coffee-shop-talk-webapi-stg weisong0908/coffee-shop-talk-webapi-stg -e Auth0:ClientSecret=${{ secrets.AUTH0_CLIENTSECRET }} -e Sentry:Dsn=${{ secrets.SENTRY_DSN }}
