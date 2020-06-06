@@ -34,7 +34,7 @@ namespace CoffeeShopTalk.WebApi.Services
             var content = new StringContent(JsonSerializer.Serialize(serverRequest), Encoding.UTF8, "application/json");
             var response = await _client.PatchAsync("api/v2/users/" + serverRequest.UserId, content);
 
-            response.EnsureSuccessStatusCode();
+            // response.EnsureSuccessStatusCode();
 
             return await response.Content.ReadAsStringAsync();
         }
