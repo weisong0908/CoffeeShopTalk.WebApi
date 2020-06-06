@@ -33,12 +33,17 @@ namespace CoffeeShopTalk.WebApi.Controllers
         [HttpPatch("update")]
         public async Task<IActionResult> Update([FromForm] ClientUserProfileUpdateRequest request)
         {
-            var profilePicturesFolder = Path.Combine("wwwroot", "profilepictures");
-            Directory.CreateDirectory(profilePicturesFolder);
-            var fileName = request.UserId.Replace('|', '-') + "-" + request.ProfilePicture.FileName;
+            var fileName = "";
+            if (request.ProfilePicture != null)
+            {
 
-            using (var stream = new FileStream(Path.Combine(profilePicturesFolder, fileName), FileMode.Create))
-                request.ProfilePicture.CopyTo(stream);
+                var profilePicturesFolder = Path.Combine("wwwroot", "profilepictures");
+                Directory.CreateDirectory(profilePicturesFolder);
+                fileName = request.UserId.Replace('|', '-') + "-" + request.ProfilePicture.FileName;
+
+                using (var stream = new FileStream(Path.Combine(profilePicturesFolder, fileName), FileMode.Create))
+                    request.ProfilePicture.CopyTo(stream);
+            }
 
             var userIdFromAccessToken = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier").Value;
             if (userIdFromAccessToken != request.UserId)
@@ -48,8 +53,10 @@ namespace CoffeeShopTalk.WebApi.Controllers
             {
                 UserId = request.UserId,
                 Name = request.Username,
-                Picture = Uri.EscapeUriString(_configuration.GetValue<string>("FileSystem:ProfilePicturesPath") + fileName)
             };
+
+            if (request.ProfilePicture != null)
+                serverRequest.Picture = Uri.EscapeUriString(_configuration.GetValue<string>("FileSystem:ProfilePicturesPath") + fileName);
 
             var result = await _userProfileService.Update(serverRequest);
 

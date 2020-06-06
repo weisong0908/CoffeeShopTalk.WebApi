@@ -31,7 +31,11 @@ namespace CoffeeShopTalk.WebApi.Services
 
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var content = new StringContent(JsonSerializer.Serialize(serverRequest), Encoding.UTF8, "application/json");
+            var jsonSerializerOptions = new JsonSerializerOptions()
+            {
+                IgnoreNullValues = true
+            };
+            var content = new StringContent(JsonSerializer.Serialize(serverRequest, jsonSerializerOptions), Encoding.UTF8, "application/json");
             var response = await _client.PatchAsync("api/v2/users/" + serverRequest.UserId, content);
 
             response.EnsureSuccessStatusCode();
