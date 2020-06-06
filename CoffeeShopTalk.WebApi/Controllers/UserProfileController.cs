@@ -35,8 +35,7 @@ namespace CoffeeShopTalk.WebApi.Controllers
         {
             var profilePicturesFolder = Path.Combine("wwwroot", "profilepictures");
             Directory.CreateDirectory(profilePicturesFolder);
-            // var fileName = request.UserId.Replace('|', '-') + Path.GetExtension(request.ProfilePicture.FileName);
-            var fileName = request.ProfilePicture.FileName;
+            var fileName = request.UserId.Replace('|', '-') + "-" + request.ProfilePicture.FileName;
 
             using (var stream = new FileStream(Path.Combine(profilePicturesFolder, fileName), FileMode.Create))
                 request.ProfilePicture.CopyTo(stream);
