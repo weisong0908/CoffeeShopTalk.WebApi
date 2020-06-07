@@ -32,6 +32,7 @@ namespace CoffeeShopTalk.WebApi.Persistence
             {
                 UserId = context.UserIdentifier,
                 Username = context.User.Claims.FirstOrDefault(c => c.Type == "https://coffee-shop-talk/user.name").Value,
+                ProfilePicture = context.User.Claims.FirstOrDefault(c => c.Type == "https://coffee-shop-talk/user.picture").Value,
                 Connection = new Connection()
                 {
                     ConnectionId = context.ConnectionId,

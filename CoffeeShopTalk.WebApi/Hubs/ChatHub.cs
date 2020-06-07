@@ -25,9 +25,7 @@ namespace CoffeeShopTalk.WebApi.Hubs
             message.Sender = Context.User.Claims.FirstOrDefault(c => c.Type == "https://coffee-shop-talk/user.name").Value;
 
             var recipients = new List<string>() { Context.UserIdentifier };
-
-            if (recipients.Contains(message.RecipientId))
-                recipients.Add(message.RecipientId);
+            recipients.Add(message.RecipientId);
 
             var connectionInfo = await _connectedUserRepository.GetUser(Context.UserIdentifier);
 
